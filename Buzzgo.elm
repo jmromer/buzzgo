@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http exposing (..)
+import Json.Decode as Decode exposing (Decoder, field, succeed)
 import Random
 
 
@@ -16,7 +17,7 @@ type Msg
     | ShareScore
     | Sort
     | NewRandom Int
-    | NewEntries (Result Http.Error String)
+    | NewEntries (Result Http.Error (List Entry))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -49,22 +50,31 @@ update msg model =
             , Cmd.none
             )
 
-        NewEntries (Ok jsonString) ->
-            let
-                _ =
-                    Debug.log "It worked" jsonString
-            in
-                ( model, Cmd.none )
+        NewEntries (Ok randomEntries) ->
+            ( { model | entries = randomEntries }, Cmd.none )
 
         NewEntries (Err error) ->
             let
                 _ =
-                    Debug.log "Opps" error
+                    Debug.log "Oops" error
             in
                 ( model, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
+
+
+
+-- Decoders
+
+
+entryDecoder : Decoder Entry
+entryDecoder =
+    Decode.map4 Entry
+        (field "id" Decode.int)
+        (field "phrase" Decode.string)
+        (field "points" Decode.int)
+        (succeed False)
 
 
 
@@ -83,8 +93,8 @@ entriesUrl =
 
 getEntries : Cmd Msg
 getEntries =
-    entriesUrl
-        |> Http.getString
+    (Decode.list entryDecoder)
+        |> Http.get entriesUrl
         |> Http.send NewEntries
 
 
