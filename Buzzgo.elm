@@ -3,6 +3,7 @@ module Buzzgo exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Random
 
 
 -- Update
@@ -13,14 +14,20 @@ type Msg
     | Mark Int
     | ShareScore
     | Sort
+    | NewRandom Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NewGame ->
-            ( { model | gameNumber = model.gameNumber + 1, entries = initialEntries }
+        NewRandom randnum ->
+            ( { model | gameNumber = randnum }
             , Cmd.none
+            )
+
+        NewGame ->
+            ( { model | entries = initialEntries }
+            , generateRandomNumber
             )
 
         Mark id ->
@@ -42,6 +49,15 @@ update msg model =
 
         _ ->
             ( model, Cmd.none )
+
+
+
+-- Commands
+
+
+generateRandomNumber : Cmd Msg
+generateRandomNumber =
+    Random.generate NewRandom (Random.int 1 100)
 
 
 
@@ -180,7 +196,7 @@ view model =
 main : Program Never Model Msg
 main =
     Html.program
-        { init = ( initialModel, Cmd.none )
+        { init = ( initialModel, generateRandomNumber )
         , view = view
         , update = update
         , subscriptions = (\_ -> Sub.none)
