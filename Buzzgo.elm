@@ -2,6 +2,27 @@ module Buzzgo exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
+
+
+-- Update
+
+
+type Msg
+    = NewGame
+    | Mark
+    | ShareScore
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        NewGame ->
+            { model | gameNumber = model.gameNumber + 1 }
+
+        _ ->
+            model
+
 
 
 -- Model
@@ -52,7 +73,7 @@ playerInfo name gameNumber =
     name ++ " -- Game #" ++ (toString gameNumber)
 
 
-viewPlayer : String -> Int -> Html msg
+viewPlayer : String -> Int -> Html Msg
 viewPlayer name gameNumber =
     let
         playerInfoText =
@@ -63,13 +84,13 @@ viewPlayer name gameNumber =
         h2 [ id "info", class "classy" ] [ playerInfoText ]
 
 
-viewHeader : String -> Html msg
+viewHeader : String -> Html Msg
 viewHeader title =
     header []
         [ h1 [] [ text title ] ]
 
 
-viewFooter : Html msg
+viewFooter : Html Msg
 viewFooter =
     footer []
         [ a [ href "https://elm-lang-org" ]
@@ -77,7 +98,7 @@ viewFooter =
         ]
 
 
-viewEntryItem : Entry -> Html msg
+viewEntryItem : Entry -> Html Msg
 viewEntryItem entry =
     li []
         [ span [ class "phrase" ] [ text entry.phrase ]
@@ -85,7 +106,7 @@ viewEntryItem entry =
         ]
 
 
-viewEntryList : List Entry -> Html msg
+viewEntryList : List Entry -> Html Msg
 viewEntryList entries =
     let
         listOfEntries =
@@ -94,17 +115,24 @@ viewEntryList entries =
         ul [] listOfEntries
 
 
-view : Model -> Html msg
+view : Model -> Html Msg
 view model =
     div [ class "content" ]
         [ viewHeader "Buzzword Bingo"
         , viewPlayer model.name model.gameNumber
         , viewEntryList model.entries
+        , div
+            [ class "button-group" ]
+            [ button [ onClick NewGame ] [ text "New Game" ] ]
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter
         ]
 
 
-main : Html msg
+main : Program Never Model Msg
 main =
-    view initialModel
+    Html.beginnerProgram
+        { model = initialModel
+        , view = view
+        , update = update
+        }
