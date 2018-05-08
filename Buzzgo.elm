@@ -3,6 +3,7 @@ module Buzzgo exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Http exposing (..)
 import Random
 
 
@@ -15,6 +16,7 @@ type Msg
     | ShareScore
     | Sort
     | NewRandom Int
+    | NewEntries (Result Http.Error String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -26,8 +28,8 @@ update msg model =
             )
 
         NewGame ->
-            ( { model | entries = initialEntries }
-            , generateRandomNumber
+            ( { model | gameNumber = model.gameNumber + 1 }
+            , getEntries
             )
 
         Mark id ->
@@ -47,6 +49,20 @@ update msg model =
             , Cmd.none
             )
 
+        NewEntries (Ok jsonString) ->
+            let
+                _ =
+                    Debug.log "It worked" jsonString
+            in
+                ( model, Cmd.none )
+
+        NewEntries (Err error) ->
+            let
+                _ =
+                    Debug.log "Opps" error
+            in
+                ( model, Cmd.none )
+
         _ ->
             ( model, Cmd.none )
 
@@ -58,6 +74,18 @@ update msg model =
 generateRandomNumber : Cmd Msg
 generateRandomNumber =
     Random.generate NewRandom (Random.int 1 100)
+
+
+entriesUrl : String
+entriesUrl =
+    "http://localhost:3000/random-entries"
+
+
+getEntries : Cmd Msg
+getEntries =
+    entriesUrl
+        |> Http.getString
+        |> Http.send NewEntries
 
 
 
@@ -87,17 +115,8 @@ initialModel : Model
 initialModel =
     { name = "Mike"
     , gameNumber = 1
-    , entries = initialEntries
+    , entries = []
     }
-
-
-initialEntries : List Entry
-initialEntries =
-    [ Entry 4 "Rock-Star Ninja" 400 False
-    , Entry 2 "Doing Agile" 200 False
-    , Entry 1 "Future-proof" 100 False
-    , Entry 3 "In the Cloud" 300 False
-    ]
 
 
 allEntriesMarked : List Entry -> Bool
@@ -135,7 +154,7 @@ viewPlayer name gameNumber =
 
 viewHeader : String -> Html Msg
 viewHeader title =
-    header []
+    div []
         [ h1 [] [ text title ] ]
 
 
@@ -196,7 +215,7 @@ view model =
 main : Program Never Model Msg
 main =
     Html.program
-        { init = ( initialModel, generateRandomNumber )
+        { init = ( initialModel, getEntries )
         , view = view
         , update = update
         , subscriptions = (\_ -> Sub.none)
