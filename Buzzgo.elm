@@ -12,6 +12,7 @@ type Msg
     = NewGame
     | Mark Int
     | ShareScore
+    | Sort
 
 
 update : Msg -> Model -> Model
@@ -32,6 +33,9 @@ update msg model =
                         e
             in
                 { model | entries = List.map markEntry model.entries }
+
+        Sort ->
+            { model | entries = (List.sortBy .points model.entries) }
 
         _ ->
             model
@@ -70,11 +74,16 @@ initialModel =
 
 initialEntries : List Entry
 initialEntries =
-    [ Entry 1 "Future-proof" 100 False
+    [ Entry 4 "Rock-Star Ninja" 400 False
     , Entry 2 "Doing Agile" 200 False
+    , Entry 1 "Future-proof" 100 False
     , Entry 3 "In the Cloud" 300 False
-    , Entry 4 "Rock-Star Ninja" 400 False
     ]
+
+
+allEntriesMarked : List Entry -> Bool
+allEntriesMarked entries =
+    List.all .marked entries
 
 
 
@@ -139,7 +148,9 @@ view model =
         , viewEntryList model.entries
         , div
             [ class "button-group" ]
-            [ button [ onClick NewGame ] [ text "New Game" ] ]
+            [ button [ onClick NewGame ] [ text "New Game" ]
+            , button [ onClick Sort ] [ text "Sort" ]
+            ]
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter
         ]
