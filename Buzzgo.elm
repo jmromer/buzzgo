@@ -18,6 +18,7 @@ type Msg
     | Sort
     | NewRandom Int
     | NewEntries (Result Http.Error (List Entry))
+    | CloseAlert
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -55,10 +56,24 @@ update msg model =
 
         NewEntries (Err error) ->
             let
-                _ =
-                    Debug.log "Oops" error
+                errorMessage =
+                    case error of
+                        Http.NetworkError ->
+                            "Is the server running?"
+
+                        Http.BadStatus response ->
+                            (toString response.status)
+
+                        Http.BadPayload message _ ->
+                            "Decoding Failed: " ++ message
+
+                        _ ->
+                            (toString error)
             in
-                ( model, Cmd.none )
+                ( { model | alertMessage = Just errorMessage }, Cmd.none )
+
+        CloseAlert ->
+            ( { model | alertMessage = Nothing }, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
@@ -230,7 +245,9 @@ viewAlertMessage alertMessage =
     case alertMessage of
         Just message ->
             div [ class "alert" ]
-                [ text message ]
+                [ span [ class "close", onClick CloseAlert ] [ text "x" ]
+                , text message
+                ]
 
         _ ->
             text ""
