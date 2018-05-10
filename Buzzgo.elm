@@ -106,6 +106,7 @@ type alias Model =
     { name : String
     , gameNumber : Int
     , entries : List Entry
+    , alertMessage : Maybe String
     }
 
 
@@ -126,6 +127,7 @@ initialModel =
     { name = "Mike"
     , gameNumber = 1
     , entries = []
+    , alertMessage = Nothing
     }
 
 
@@ -210,6 +212,7 @@ view model =
     div [ class "content" ]
         [ viewHeader "Buzzword Bingo"
         , viewPlayer model.name model.gameNumber
+        , viewAlertMessage model.alertMessage
         , viewEntryList model.entries
         , viewScore (sumMarkedPoints model.entries)
         , div
@@ -220,6 +223,17 @@ view model =
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter
         ]
+
+
+viewAlertMessage : Maybe String -> Html Msg
+viewAlertMessage alertMessage =
+    case alertMessage of
+        Just message ->
+            div [ class "alert" ]
+                [ text message ]
+
+        _ ->
+            text ""
 
 
 main : Program Never Model Msg
