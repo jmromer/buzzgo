@@ -24,6 +24,7 @@ type Msg
     | Sort
     | SaveName
     | CancelName
+    | ChangeGameState GameState
 
 
 type alias Score =
@@ -36,11 +37,26 @@ type alias Score =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ChangeGameState state ->
+            ( { model | gameState = state }, Cmd.none )
+
         SaveName ->
-            ( { model | name = model.nameInput, nameInput = "" }, Cmd.none )
+            ( { model
+                | name = model.nameInput
+                , nameInput = ""
+                , gameState = Playing
+              }
+            , Cmd.none
+            )
 
         CancelName ->
-            ( { model | name = "Anonymous", nameInput = "" }, Cmd.none )
+            ( { model
+                | name = "Anonymous"
+                , nameInput = ""
+                , gameState = Playing
+              }
+            , Cmd.none
+            )
 
         SetNameInput value ->
             ( { model | name = value, nameInput = value }, Cmd.none )
@@ -180,12 +196,18 @@ postScore model =
 -- Model
 
 
+type GameState
+    = EnteringName
+    | Playing
+
+
 type alias Model =
     { name : String
     , gameNumber : Int
     , entries : List Entry
     , alertMessage : Maybe String
     , nameInput : String
+    , gameState : GameState
     }
 
 
@@ -208,6 +230,7 @@ initialModel =
     , entries = []
     , alertMessage = Nothing
     , nameInput = ""
+    , gameState = EnteringName
     }
 
 
@@ -321,18 +344,23 @@ viewAlertMessage alertMessage =
 
 viewNameInput : Model -> Html Msg
 viewNameInput model =
-    div [ class "name-input" ]
-        [ input
-            [ type_ "text"
-            , placeholder "Who's playing?"
-            , autofocus True
-            , value model.nameInput
-            , onInput SetNameInput
-            ]
-            []
-        , button [ onClick SaveName ] [ text "Save" ]
-        , button [ onClick CancelName ] [ text "Cancel" ]
-        ]
+    case model.gameState of
+        Playing ->
+            text ""
+
+        EnteringName ->
+            div [ class "name-input" ]
+                [ input
+                    [ type_ "text"
+                    , placeholder "Who's playing?"
+                    , autofocus True
+                    , value model.nameInput
+                    , onInput SetNameInput
+                    ]
+                    []
+                , button [ onClick SaveName ] [ text "Save" ]
+                , button [ onClick CancelName ] [ text "Cancel" ]
+                ]
 
 
 main : Program Never Model Msg
