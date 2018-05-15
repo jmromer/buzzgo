@@ -251,20 +251,12 @@ sumMarkedPoints entries =
 -- View
 
 
-playerInfo : String -> Int -> String
-playerInfo name gameNumber =
-    name ++ " -- Game #" ++ (toString gameNumber)
-
-
 viewPlayer : String -> Int -> Html Msg
 viewPlayer name gameNumber =
-    let
-        playerInfoText =
-            playerInfo name gameNumber
-                |> String.toUpper
-                |> text
-    in
-        h2 [ id "info", class "classy" ] [ playerInfoText ]
+    h2 [ id "info", class "classy" ]
+        [ a [ href "#", onClick (ChangeGameState EnteringName) ] [ text name ]
+        , text (" -- Game #" ++ (toString gameNumber))
+        ]
 
 
 viewHeader : String -> Html Msg
