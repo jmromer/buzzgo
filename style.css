@@ -62,10 +62,16 @@ button {
   color: #5e6163;
   background-color: #D9D9D9;
   cursor: pointer;
+  margin: 5px
 }
 
-.primary {
-  margin: 5px;
+.name-input input {
+  display: inline;
+  width: 60% !important;
+}
+
+.name-input button {
+  padding: 10px;
 }
 
 button:hover {
