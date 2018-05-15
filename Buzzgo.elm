@@ -5,6 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http exposing (..)
 import Json.Decode as Decode exposing (Decoder, field, succeed)
+import Json.Encode as Encode exposing (..)
 import Random
 
 
@@ -13,12 +14,20 @@ import Random
 
 type Msg
     = NewGame
+    | CloseAlert
     | Mark Int
+    | NewEntries (Result Http.Error (List Entry))
+    | NewRandom Int
+    | NewScore (Result Http.Error Score)
     | ShareScore
     | Sort
-    | NewRandom Int
-    | NewEntries (Result Http.Error (List Entry))
-    | CloseAlert
+
+
+type alias Score =
+    { id : Int
+    , name : String
+    , score : Int
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -28,6 +37,25 @@ update msg model =
             ( { model | gameNumber = randnum }
             , Cmd.none
             )
+
+        ShareScore ->
+            ( model, postScore model )
+
+        NewScore (Ok score) ->
+            let
+                message =
+                    "Your score of "
+                        ++ (toString score.score)
+                        ++ " was succesfully shared!"
+            in
+                ( { model | alertMessage = Just message }, Cmd.none )
+
+        NewScore (Err error) ->
+            let
+                message =
+                    "Error posting your score: " ++ (toString error)
+            in
+                ( { model | alertMessage = Just message }, Cmd.none )
 
         NewGame ->
             ( { model | gameNumber = model.gameNumber + 1 }
@@ -75,12 +103,19 @@ update msg model =
         CloseAlert ->
             ( { model | alertMessage = Nothing }, Cmd.none )
 
-        _ ->
-            ( model, Cmd.none )
 
 
+-- _ ->
+--     ( model, Cmd.none )
+-- Decoders / Encoders
 
--- Decoders
+
+encodeScore : Model -> Encode.Value
+encodeScore model =
+    Encode.object
+        [ ( "name", Encode.string model.name )
+        , ( "score", Encode.int (sumMarkedPoints model.entries) )
+        ]
 
 
 entryDecoder : Decoder Entry
@@ -90,6 +125,14 @@ entryDecoder =
         (field "phrase" Decode.string)
         (field "points" Decode.int)
         (succeed False)
+
+
+scoreDecoder : Decoder Score
+scoreDecoder =
+    Decode.map3 Score
+        (field "id" Decode.int)
+        (field "name" Decode.string)
+        (field "score" Decode.int)
 
 
 
@@ -111,6 +154,22 @@ getEntries =
     (Decode.list entryDecoder)
         |> Http.get entriesUrl
         |> Http.send NewEntries
+
+
+postScore : Model -> Cmd Msg
+postScore model =
+    let
+        url =
+            "http://localhost:3000/scores"
+
+        body =
+            encodeScore model
+                |> Http.jsonBody
+
+        request =
+            Http.post url body scoreDecoder
+    in
+        Http.send NewScore request
 
 
 
@@ -233,6 +292,7 @@ view model =
         , div [ class "button-group" ]
             [ button [ class "primary", onClick NewGame ] [ text "New Game" ]
             , button [ class "primary", onClick Sort ] [ text "Sort" ]
+            , button [ class "primary", onClick ShareScore ] [ text "Share Score" ]
             ]
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter
