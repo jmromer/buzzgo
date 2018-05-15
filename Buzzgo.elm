@@ -2,7 +2,7 @@ module Buzzgo exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 import Http exposing (..)
 import Json.Decode as Decode exposing (Decoder, field, succeed)
 import Json.Encode as Encode exposing (..)
@@ -19,8 +19,11 @@ type Msg
     | NewEntries (Result Http.Error (List Entry))
     | NewRandom Int
     | NewScore (Result Http.Error Score)
+    | SetNameInput String
     | ShareScore
     | Sort
+    | SaveName
+    | CancelName
 
 
 type alias Score =
@@ -33,10 +36,17 @@ type alias Score =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        SaveName ->
+            ( { model | name = model.nameInput, nameInput = "" }, Cmd.none )
+
+        CancelName ->
+            ( { model | name = "Anonymous", nameInput = "" }, Cmd.none )
+
+        SetNameInput value ->
+            ( { model | name = value, nameInput = value }, Cmd.none )
+
         NewRandom randnum ->
-            ( { model | gameNumber = randnum }
-            , Cmd.none
-            )
+            ( { model | gameNumber = randnum }, Cmd.none )
 
         ShareScore ->
             ( model, postScore model )
@@ -58,9 +68,7 @@ update msg model =
                 ( { model | alertMessage = Just message }, Cmd.none )
 
         NewGame ->
-            ( { model | gameNumber = model.gameNumber + 1 }
-            , getEntries
-            )
+            ( { model | gameNumber = model.gameNumber + 1 }, getEntries )
 
         Mark id ->
             let
@@ -70,14 +78,10 @@ update msg model =
                     else
                         e
             in
-                ( { model | entries = List.map markEntry model.entries }
-                , Cmd.none
-                )
+                ( { model | entries = List.map markEntry model.entries }, Cmd.none )
 
         Sort ->
-            ( { model | entries = (List.sortBy .points model.entries) }
-            , Cmd.none
-            )
+            ( { model | entries = (List.sortBy .points model.entries) }, Cmd.none )
 
         NewEntries (Ok randomEntries) ->
             ( { model | entries = randomEntries }, Cmd.none )
@@ -181,6 +185,7 @@ type alias Model =
     , gameNumber : Int
     , entries : List Entry
     , alertMessage : Maybe String
+    , nameInput : String
     }
 
 
@@ -198,10 +203,11 @@ type alias Entry =
 
 initialModel : Model
 initialModel =
-    { name = "Mike"
+    { name = "Anonymous"
     , gameNumber = 1
     , entries = []
     , alertMessage = Nothing
+    , nameInput = ""
     }
 
 
@@ -287,12 +293,13 @@ view model =
         [ viewHeader "Buzzword Bingo"
         , viewPlayer model.name model.gameNumber
         , viewAlertMessage model.alertMessage
+        , viewNameInput model
         , viewEntryList model.entries
         , viewScore (sumMarkedPoints model.entries)
         , div [ class "button-group" ]
-            [ button [ class "primary", onClick NewGame ] [ text "New Game" ]
-            , button [ class "primary", onClick Sort ] [ text "Sort" ]
-            , button [ class "primary", onClick ShareScore ] [ text "Share Score" ]
+            [ button [ onClick NewGame ] [ text "New Game" ]
+            , button [ onClick Sort ] [ text "Sort" ]
+            , button [ onClick ShareScore ] [ text "Share Score" ]
             ]
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter
@@ -310,6 +317,22 @@ viewAlertMessage alertMessage =
 
         _ ->
             text ""
+
+
+viewNameInput : Model -> Html Msg
+viewNameInput model =
+    div [ class "name-input" ]
+        [ input
+            [ type_ "text"
+            , placeholder "Who's playing?"
+            , autofocus True
+            , value model.nameInput
+            , onInput SetNameInput
+            ]
+            []
+        , button [ onClick SaveName ] [ text "Save" ]
+        , button [ onClick CancelName ] [ text "Cancel" ]
+        ]
 
 
 main : Program Never Model Msg
