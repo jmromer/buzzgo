@@ -230,10 +230,9 @@ view model =
         , viewAlertMessage model.alertMessage
         , viewEntryList model.entries
         , viewScore (sumMarkedPoints model.entries)
-        , div
-            [ class "button-group" ]
-            [ button [ onClick NewGame ] [ text "New Game" ]
-            , button [ onClick Sort ] [ text "Sort" ]
+        , div [ class "button-group" ]
+            [ button [ class "primary", onClick NewGame ] [ text "New Game" ]
+            , button [ class "primary", onClick Sort ] [ text "Sort" ]
             ]
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter

@@ -64,6 +64,10 @@ button {
   cursor: pointer;
 }
 
+.primary {
+  margin: 5px;
+}
+
 button:hover {
   opacity: 0.75;
 }
