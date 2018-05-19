@@ -7,6 +7,7 @@ import Http exposing (..)
 import Json.Decode as Decode exposing (Decoder, field, succeed)
 import Json.Encode as Encode exposing (..)
 import Random
+import ViewHelpers exposing (primaryButton)
 
 
 -- Update
@@ -353,11 +354,6 @@ viewNameInput model =
                 , primaryButton SaveName "Save"
                 , primaryButton CancelName "Cancel"
                 ]
-
-
-primaryButton : Msg -> String -> Html Msg
-primaryButton msg buttonLabel =
-    button [ class "primary", onClick msg ] [ text buttonLabel ]
 
 
 main : Program Never Model Msg
