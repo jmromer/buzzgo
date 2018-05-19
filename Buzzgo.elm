@@ -7,7 +7,7 @@ import Http exposing (..)
 import Json.Decode as Decode exposing (Decoder, field, succeed)
 import Json.Encode as Encode exposing (..)
 import Random
-import ViewHelpers exposing (primaryButton)
+import ViewHelpers exposing (primaryButton, alert)
 
 
 -- Update
@@ -308,7 +308,7 @@ view model =
     div [ class "content" ]
         [ viewHeader "Buzzword Bingo"
         , viewPlayer model.name model.gameNumber
-        , viewAlertMessage model.alertMessage
+        , alert CloseAlert model.alertMessage
         , viewNameInput model
         , viewEntryList model.entries
         , viewScore (sumMarkedPoints model.entries)
@@ -320,19 +320,6 @@ view model =
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter
         ]
-
-
-viewAlertMessage : Maybe String -> Html Msg
-viewAlertMessage alertMessage =
-    case alertMessage of
-        Just message ->
-            div [ class "alert" ]
-                [ span [ class "close", onClick CloseAlert ] [ text "x" ]
-                , text message
-                ]
-
-        _ ->
-            text ""
 
 
 viewNameInput : Model -> Html Msg
