@@ -244,26 +244,6 @@ viewFooter =
         ]
 
 
-viewEntryItem : Entry.Entry -> Html Msg
-viewEntryItem entry =
-    li
-        [ classList [ ( "marked", entry.marked ) ]
-        , onClick (Mark entry.id)
-        ]
-        [ span [ class "phrase" ] [ text entry.phrase ]
-        , span [ class "points" ] [ text (toString entry.points) ]
-        ]
-
-
-viewEntryList : List Entry.Entry -> Html Msg
-viewEntryList entries =
-    let
-        listOfEntries =
-            List.map viewEntryItem entries
-    in
-        ul [] listOfEntries
-
-
 viewScore : Int -> Html Msg
 viewScore score =
     div
@@ -280,7 +260,7 @@ view model =
         , viewPlayer model.name model.gameNumber
         , alert CloseAlert model.alertMessage
         , viewNameInput model
-        , viewEntryList model.entries
+        , Entry.viewEntryList Mark model.entries
         , viewScore (sumMarkedPoints model.entries)
         , div [ class "button-group" ]
             [ primaryButton NewGame "New Game"
