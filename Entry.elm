@@ -1,4 +1,11 @@
-module Entry exposing (..)
+module Entry
+    exposing
+        ( Entry
+        , markEntryWithId
+        , sumMarkedPoints
+        , viewEntryList
+        , getEntries
+        )
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
