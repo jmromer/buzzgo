@@ -80,11 +80,7 @@ update msg model =
                 ( { model | alertMessage = Just message }, Cmd.none )
 
         NewScore (Err error) ->
-            let
-                message =
-                    "Error posting your score: " ++ (toString error)
-            in
-                ( { model | alertMessage = Just message }, Cmd.none )
+            ( { model | alertMessage = Just (httpErrorToMessage error) }, Cmd.none )
 
         NewGame ->
             ( { model | gameNumber = model.gameNumber + 1 }, getEntries )
@@ -106,25 +102,26 @@ update msg model =
             ( { model | entries = randomEntries }, Cmd.none )
 
         NewEntries (Err error) ->
-            let
-                errorMessage =
-                    case error of
-                        Http.NetworkError ->
-                            "Is the server running?"
-
-                        Http.BadStatus response ->
-                            (toString response.status)
-
-                        Http.BadPayload message _ ->
-                            "Decoding Failed: " ++ message
-
-                        _ ->
-                            (toString error)
-            in
-                ( { model | alertMessage = Just errorMessage }, Cmd.none )
+            ( { model | alertMessage = Just (httpErrorToMessage error) }, Cmd.none )
 
         CloseAlert ->
             ( { model | alertMessage = Nothing }, Cmd.none )
+
+
+httpErrorToMessage : Http.Error -> String
+httpErrorToMessage error =
+    case error of
+        Http.NetworkError ->
+            "Is the server running?"
+
+        Http.BadStatus response ->
+            (toString response.status)
+
+        Http.BadPayload message _ ->
+            "Decoding Failed: " ++ message
+
+        _ ->
+            (toString error)
 
 
 
