@@ -1,5 +1,6 @@
 module Buzzgo exposing (..)
 
+import Entry
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
@@ -17,7 +18,7 @@ type Msg
     = NewGame
     | CloseAlert
     | Mark Int
-    | NewEntries (Result Http.Error (List Entry))
+    | NewEntries (Result Http.Error (List Entry.Entry))
     | NewRandom Int
     | NewScore (Result Http.Error Score)
     | SetNameInput String
@@ -84,17 +85,10 @@ update msg model =
             ( { model | alertMessage = Just (httpErrorToMessage error) }, Cmd.none )
 
         NewGame ->
-            ( { model | gameNumber = model.gameNumber + 1 }, getEntries )
+            ( { model | gameNumber = model.gameNumber + 1 }, Entry.getEntries NewEntries entriesUrl )
 
         Mark id ->
-            let
-                markEntry e =
-                    if e.id == id then
-                        { e | marked = (not e.marked) }
-                    else
-                        e
-            in
-                ( { model | entries = List.map markEntry model.entries }, Cmd.none )
+            ( { model | entries = (Entry.markEntryWithId model.entries id) }, Cmd.none )
 
         Sort ->
             ( { model | entries = (List.sortBy .points model.entries) }, Cmd.none )
@@ -139,15 +133,6 @@ encodeScore model =
         ]
 
 
-entryDecoder : Decoder Entry
-entryDecoder =
-    Decode.map4 Entry
-        (field "id" Decode.int)
-        (field "phrase" Decode.string)
-        (field "points" Decode.int)
-        (succeed False)
-
-
 scoreDecoder : Decoder Score
 scoreDecoder =
     Decode.map3 Score
@@ -168,13 +153,6 @@ generateRandomNumber =
 entriesUrl : String
 entriesUrl =
     "http://localhost:3000/random-entries"
-
-
-getEntries : Cmd Msg
-getEntries =
-    (Decode.list entryDecoder)
-        |> Http.get entriesUrl
-        |> Http.send NewEntries
 
 
 postScore : Model -> Cmd Msg
@@ -205,18 +183,10 @@ type GameState
 type alias Model =
     { name : String
     , gameNumber : Int
-    , entries : List Entry
+    , entries : List Entry.Entry
     , alertMessage : Maybe String
     , nameInput : String
     , gameState : GameState
-    }
-
-
-type alias Entry =
-    { id : Int
-    , phrase : String
-    , points : Int
-    , marked : Bool
     }
 
 
@@ -235,12 +205,12 @@ initialModel =
     }
 
 
-allEntriesMarked : List Entry -> Bool
+allEntriesMarked : List Entry.Entry -> Bool
 allEntriesMarked entries =
     List.all .marked entries
 
 
-sumMarkedPoints : List Entry -> Int
+sumMarkedPoints : List Entry.Entry -> Int
 sumMarkedPoints entries =
     entries
         |> List.filter .marked
@@ -274,7 +244,7 @@ viewFooter =
         ]
 
 
-viewEntryItem : Entry -> Html Msg
+viewEntryItem : Entry.Entry -> Html Msg
 viewEntryItem entry =
     li
         [ classList [ ( "marked", entry.marked ) ]
@@ -285,7 +255,7 @@ viewEntryItem entry =
         ]
 
 
-viewEntryList : List Entry -> Html Msg
+viewEntryList : List Entry.Entry -> Html Msg
 viewEntryList entries =
     let
         listOfEntries =
@@ -346,7 +316,7 @@ viewNameInput model =
 main : Program Never Model Msg
 main =
     Html.program
-        { init = ( initialModel, getEntries )
+        { init = ( initialModel, Entry.getEntries NewEntries entriesUrl )
         , view = view
         , update = update
         , subscriptions = (\_ -> Sub.none)
