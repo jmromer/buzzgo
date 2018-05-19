@@ -61,3 +61,16 @@ viewEntryList msg entries =
             List.map (viewEntryItem msg) entries
     in
         ul [] listOfEntries
+
+
+sumMarkedPoints : List Entry -> Int
+sumMarkedPoints entries =
+    entries
+        |> List.filter .marked
+        |> List.map .points
+        |> List.foldl (+) 0
+
+
+allEntriesMarked : List Entry -> Bool
+allEntriesMarked entries =
+    List.all .marked entries

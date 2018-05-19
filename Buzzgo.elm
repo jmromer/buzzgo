@@ -129,7 +129,7 @@ encodeScore : Model -> Encode.Value
 encodeScore model =
     Encode.object
         [ ( "name", Encode.string model.name )
-        , ( "score", Encode.int (sumMarkedPoints model.entries) )
+        , ( "score", Encode.int (Entry.sumMarkedPoints model.entries) )
         ]
 
 
@@ -205,19 +205,6 @@ initialModel =
     }
 
 
-allEntriesMarked : List Entry.Entry -> Bool
-allEntriesMarked entries =
-    List.all .marked entries
-
-
-sumMarkedPoints : List Entry.Entry -> Int
-sumMarkedPoints entries =
-    entries
-        |> List.filter .marked
-        |> List.map .points
-        |> List.foldl (+) 0
-
-
 
 -- View
 
@@ -261,7 +248,7 @@ view model =
         , alert CloseAlert model.alertMessage
         , viewNameInput model
         , Entry.viewEntryList Mark model.entries
-        , viewScore (sumMarkedPoints model.entries)
+        , viewScore (Entry.sumMarkedPoints model.entries)
         , div [ class "button-group" ]
             [ primaryButton NewGame "New Game"
             , primaryButton Sort "Sort"
